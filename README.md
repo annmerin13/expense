@@ -1,4 +1,4 @@
-# Ledger — Personal Expense Tracker
+# A Personal Expense Tracker
 
 A clean, no-nonsense expense tracker. Runs entirely on your laptop with no external services required.
 
