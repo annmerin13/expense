@@ -28,7 +28,7 @@ The database is a `db.json` file that gets created automatically the first time 
 
 **JSON file** as the database. 
 
-** HTML/CSS/JS** for the frontend. No build step. You start the server and the app is there. 
+**HTML/CSS/JS** for the frontend. No build step. You start the server and the app is there. 
 
 ---
 
