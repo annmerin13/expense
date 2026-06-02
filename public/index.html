@@ -22,7 +22,7 @@
       --serif: 'DM Serif Display', serif;
     }
 
-    html { font-size: 15px; }
+    html { font-size: 16px; }
     body {
       background: var(--paper);
       color: var(--ink);
@@ -103,24 +103,43 @@
       gap: 0.25rem;
     }
     .filter-group label {
-      font-size: 0.62rem;
+      font-size: 0.68rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted);
+      font-weight: 500;
     }
     .filter-group input,
     .filter-group select {
       background: transparent;
       border: 1px solid var(--border);
-      padding: 0.35rem 0.5rem;
+      padding: 0.45rem 0.6rem;
       font-family: var(--mono);
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       color: var(--ink);
       outline: none;
       transition: border-color 0.15s;
     }
     .filter-group input:focus,
     .filter-group select:focus { border-color: var(--ink); }
+    .btn-search {
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      padding: 0 0.7rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-search:hover { background: var(--accent-2); }
+    .date-error {
+      font-size: 0.68rem;
+      color: var(--accent);
+      margin-top: 0.2rem;
+      display: none;
+    }
+    .date-error.show { display: block; }
 
     .filters-row2 {
       display: flex;
@@ -144,17 +163,18 @@
     /* ── EXPENSE LIST ── */
     .list-header {
       display: grid;
-      grid-template-columns: 2fr 80px 110px 80px 60px;
+      grid-template-columns: 2fr 100px 120px 100px 80px;
       gap: 0.5rem;
-      padding: 0.4rem 0;
+      padding: 0.5rem 0;
       border-bottom: 2px solid var(--ink);
       margin-bottom: 0;
     }
     .list-header span {
-      font-size: 0.62rem;
+      font-size: 0.68rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted);
+      font-weight: 500;
     }
     .list-header span:last-child { text-align: right; }
     .col-amount { text-align: right !important; }
@@ -162,26 +182,26 @@
 
     .expense-row {
       display: grid;
-      grid-template-columns: 2fr 80px 110px 80px 60px;
+      grid-template-columns: 2fr 100px 120px 100px 80px;
       gap: 0.5rem;
-      padding: 0.75rem 0;
+      padding: 0.9rem 0;
       border-bottom: 1px solid var(--border);
-      align-items: start;
+      align-items: center;
       transition: background 0.1s;
       cursor: default;
     }
-    .expense-row:hover { background: var(--paper-2); margin: 0 -0.5rem; padding: 0.75rem 0.5rem; }
+    .expense-row:hover { background: var(--paper-2); margin: 0 -0.5rem; padding: 0.9rem 0.5rem; }
 
     .exp-title-group { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
     .exp-title {
-      font-size: 0.88rem;
+      font-size: 0.95rem;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .exp-note {
-      font-size: 0.7rem;
+      font-size: 0.75rem;
       color: var(--muted);
       font-style: italic;
       white-space: nowrap;
@@ -189,42 +209,42 @@
       text-overflow: ellipsis;
     }
     .exp-amount {
-      font-size: 0.88rem;
+      font-size: 0.95rem;
       font-weight: 500;
       text-align: right;
       letter-spacing: -0.02em;
     }
     .exp-cat {
-      font-size: 0.68rem;
+      font-size: 0.72rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       display: flex;
       align-items: center;
     }
     .cat-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       display: inline-block;
       margin-right: 0.4rem;
       flex-shrink: 0;
     }
-    .exp-date { font-size: 0.75rem; color: var(--muted); }
-    .exp-actions { display: flex; gap: 0.3rem; justify-content: flex-end; }
+    .exp-date { font-size: 0.8rem; color: var(--muted); }
+    .exp-actions { display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center; }
     .btn-icon {
-      background: none;
-      border: none;
+      background: var(--paper-2);
+      border: 1px solid var(--border);
       cursor: pointer;
-      padding: 0.2rem;
-      color: var(--muted);
-      font-size: 0.75rem;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.72rem;
       font-family: var(--mono);
       letter-spacing: 0.04em;
-      transition: color 0.15s;
+      transition: all 0.15s;
       text-decoration: none;
+      color: var(--muted);
     }
-    .btn-icon:hover.edit { color: var(--accent-2); }
-    .btn-icon:hover.del { color: var(--accent); }
+    .btn-icon.edit:hover { background: #e8f0fd; border-color: var(--accent-2); color: var(--accent-2); }
+    .btn-icon.del:hover { background: #fdf0ed; border-color: var(--accent); color: var(--accent); }
 
     /* Category colors */
     .cat-Food .cat-dot { background: #e8a838; }
@@ -535,7 +555,10 @@
       <div class="filters">
         <div class="filter-group">
           <label>Search Title</label>
-          <input type="text" id="f-title" placeholder="e.g. coffee…" oninput="debounceLoad()" />
+          <div style="display:flex;gap:0.3rem">
+            <input type="text" id="f-title" placeholder="e.g. coffee…" oninput="debounceLoad()" onkeydown="if(event.key==='Enter') loadExpenses()" style="flex:1" />
+            <button class="btn-search" onclick="loadExpenses()" title="Search">⏎</button>
+          </div>
         </div>
         <div class="filter-group">
           <label>Category</label>
@@ -551,11 +574,12 @@
         </div>
         <div class="filter-group">
           <label>From</label>
-          <input type="date" id="f-from" onchange="loadExpenses()" />
+          <input type="date" id="f-from" onchange="onFromChange()" />
         </div>
         <div class="filter-group">
           <label>To</label>
-          <input type="date" id="f-to" onchange="loadExpenses()" />
+          <input type="date" id="f-to" onchange="onToChange()" />
+          <span class="date-error" id="date-range-error">"To" must be after "From"</span>
         </div>
       </div>
       <div class="filters-row2">
@@ -909,11 +933,45 @@
     openModal(expense);
   }
 
+  function onFromChange() {
+    const from = document.getElementById('f-from').value;
+    const toInput = document.getElementById('f-to');
+    // Set min on "To" so the date picker itself blocks invalid selection
+    if (from) toInput.min = from;
+    // If existing "to" is now before "from", clear it
+    if (toInput.value && toInput.value < from) {
+      toInput.value = '';
+      showDateError(true);
+    } else {
+      showDateError(false);
+    }
+    loadExpenses();
+  }
+
+  function onToChange() {
+    const from = document.getElementById('f-from').value;
+    const to = document.getElementById('f-to').value;
+    if (from && to && to < from) {
+      showDateError(true);
+      document.getElementById('f-to').value = '';
+      return;
+    }
+    showDateError(false);
+    loadExpenses();
+  }
+
+  function showDateError(show) {
+    document.getElementById('date-range-error').classList.toggle('show', show);
+    document.getElementById('f-to').style.borderColor = show ? 'var(--accent)' : '';
+  }
+
   function clearFilters() {
     document.getElementById('f-title').value = '';
     document.getElementById('f-category').value = '';
     document.getElementById('f-from').value = '';
     document.getElementById('f-to').value = '';
+    document.getElementById('f-to').min = '';
+    showDateError(false);
     loadExpenses();
   }
 
