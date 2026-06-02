@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ledger — Expense Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0f0f0f;
+      --paper: #f5f2eb;
+      --paper-2: #ece9e0;
+      --accent: #c8421a;
+      --accent-2: #1a4fc8;
+      --muted: #6b6560;
+      --border: #d0cbbf;
+      --success: #1a7a3c;
+      --mono: 'DM Mono', monospace;
+      --serif: 'DM Serif Display', serif;
+    }
+
+    html { font-size: 15px; }
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--mono);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      border-bottom: 2px solid var(--ink);
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: baseline;
+      gap: 1.5rem;
+      position: sticky;
+      top: 0;
+      background: var(--paper);
+      z-index: 100;
+    }
+    .logo {
+      font-family: var(--serif);
+      font-size: 1.8rem;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .logo span { color: var(--accent); font-style: italic; }
+    .header-meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-left: 1px solid var(--border);
+      padding-left: 1.5rem;
+    }
+    .header-right {
+      margin-left: auto;
+    }
+    .btn-new {
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      padding: 0.5rem 1.2rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-new:hover { background: var(--accent); }
+
+    /* ── LAYOUT ── */
+    main {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 0;
+      min-height: calc(100vh - 60px);
+    }
+
+    /* ── LEFT: EXPENSES ── */
+    .panel-left {
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+    }
+
+    /* ── FILTERS ── */
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .filter-group label {
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .filter-group input,
+    .filter-group select {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .filter-group input:focus,
+    .filter-group select:focus { border-color: var(--ink); }
+
+    .filters-row2 {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-end;
+    }
+    .btn-clear {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.8rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-clear:hover { border-color: var(--ink); color: var(--ink); }
+
+    /* ── EXPENSE LIST ── */
+    .list-header {
+      display: grid;
+      grid-template-columns: 2fr 80px 110px 80px 60px;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      border-bottom: 2px solid var(--ink);
+      margin-bottom: 0;
+    }
+    .list-header span {
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .list-header span:last-child { text-align: right; }
+    .col-amount { text-align: right !important; }
+    .col-actions { text-align: right !important; }
+
+    .expense-row {
+      display: grid;
+      grid-template-columns: 2fr 80px 110px 80px 60px;
+      gap: 0.5rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+      transition: background 0.1s;
+      cursor: default;
+    }
+    .expense-row:hover { background: var(--paper-2); margin: 0 -0.5rem; padding: 0.75rem 0.5rem; }
+
+    .exp-title-group { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+    .exp-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .exp-note {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .exp-amount {
+      font-size: 0.88rem;
+      font-weight: 500;
+      text-align: right;
+      letter-spacing: -0.02em;
+    }
+    .exp-cat {
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+    }
+    .cat-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 0.4rem;
+      flex-shrink: 0;
+    }
+    .exp-date { font-size: 0.75rem; color: var(--muted); }
+    .exp-actions { display: flex; gap: 0.3rem; justify-content: flex-end; }
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.2rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-family: var(--mono);
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+      text-decoration: none;
+    }
+    .btn-icon:hover.edit { color: var(--accent-2); }
+    .btn-icon:hover.del { color: var(--accent); }
+
+    /* Category colors */
+    .cat-Food .cat-dot { background: #e8a838; }
+    .cat-Transport .cat-dot { background: #3a7bd5; }
+    .cat-Shopping .cat-dot { background: #9b59b6; }
+    .cat-Bills .cat-dot { background: #c8421a; }
+    .cat-Entertainment .cat-dot { background: #1a7a3c; }
+    .cat-Other .cat-dot { background: #6b6560; }
+
+    .empty-state {
+      padding: 3rem 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-style: italic;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .result-count {
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      padding: 0.5rem 0 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ── RIGHT: SUMMARY ── */
+    .panel-right {
+      padding: 1.5rem;
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+
+    .summary-header {
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.8rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .month-nav { display: flex; gap: 0.4rem; align-items: center; }
+    .btn-month {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 1rem;
+      padding: 0 0.2rem;
+      line-height: 1;
+    }
+    .btn-month:hover { color: var(--ink); }
+    .month-label { font-size: 0.7rem; }
+
+    .summary-total {
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .summary-total-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+    .summary-total-amount {
+      font-family: var(--serif);
+      font-size: 2.4rem;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .summary-total-count {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .summary-breakdown { display: flex; flex-direction: column; gap: 0; }
+    .summary-row {
+      display: flex;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      gap: 0.6rem;
+    }
+    .summary-cat-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .summary-cat-amount {
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-align: right;
+    }
+    .summary-bar-wrap {
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+      margin-top: 0.2rem;
+    }
+    .summary-bar { height: 2px; transition: width 0.4s ease; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,15,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(2px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      width: 100%;
+      max-width: 460px;
+      padding: 2rem;
+      position: relative;
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-title {
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.01em;
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+      font-family: var(--mono);
+    }
+    .modal-close:hover { color: var(--accent); }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--paper-2);
+      border: 1px solid var(--border);
+      border-radius: 0;
+      padding: 0.55rem 0.7rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--ink); background: var(--paper); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+    .form-errors {
+      background: #fdf0ed;
+      border: 1px solid var(--accent);
+      padding: 0.6rem 0.8rem;
+      margin-bottom: 1rem;
+      font-size: 0.75rem;
+      color: var(--accent);
+      display: none;
+    }
+    .form-errors.show { display: block; }
+    .form-errors ul { padding-left: 1rem; }
+
+    .form-actions {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+    .btn-submit {
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      padding: 0.6rem 1.5rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-submit:hover { background: var(--accent); }
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .btn-cancel:hover { border-color: var(--ink); color: var(--ink); }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 0.7rem 1.2rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      z-index: 300;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.2s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: var(--accent); }
+
+    /* ── CONFIRM DIALOG ── */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,15,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+    .confirm-overlay.open { display: flex; }
+    .confirm-box {
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      padding: 1.5rem;
+      max-width: 320px;
+      width: 90%;
+      animation: slideUp 0.15s ease;
+    }
+    .confirm-box p { font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+    .btn-danger {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Ledger<span>.</span></div>
+  <div class="header-meta">Personal Expense Tracker</div>
+  <div class="header-right">
+    <button class="btn-new" onclick="openModal()">+ Add Expense</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+  <!-- LEFT: LIST -->
+  <div class="panel-left">
+
+    <!-- FILTERS -->
+    <div style="margin-bottom:0.8rem">
+      <div class="filters">
+        <div class="filter-group">
+          <label>Search Title</label>
+          <input type="text" id="f-title" placeholder="e.g. coffee…" oninput="debounceLoad()" />
+        </div>
+        <div class="filter-group">
+          <label>Category</label>
+          <select id="f-category" onchange="loadExpenses()">
+            <option value="">All</option>
+            <option>Food</option>
+            <option>Transport</option>
+            <option>Shopping</option>
+            <option>Bills</option>
+            <option>Entertainment</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>From</label>
+          <input type="date" id="f-from" onchange="loadExpenses()" />
+        </div>
+        <div class="filter-group">
+          <label>To</label>
+          <input type="date" id="f-to" onchange="loadExpenses()" />
+        </div>
+      </div>
+      <div class="filters-row2">
+        <button class="btn-clear" onclick="clearFilters()">Clear filters</button>
+      </div>
+    </div>
+
+    <!-- LIST HEADER -->
+    <div class="list-header">
+      <span>Title / Note</span>
+      <span class="col-amount">Amount</span>
+      <span>Category</span>
+      <span>Date</span>
+      <span class="col-actions">—</span>
+    </div>
+
+    <div class="result-count" id="result-count"></div>
+
+    <!-- EXPENSE ROWS -->
+    <div id="expense-list"></div>
+
+  </div>
+
+  <!-- RIGHT: SUMMARY -->
+  <div class="panel-right">
+    <div class="summary-header">
+      <span>Monthly Summary</span>
+      <div class="month-nav">
+        <button class="btn-month" onclick="changeMonth(-1)">‹</button>
+        <span class="month-label" id="month-label"></span>
+        <button class="btn-month" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+    <div class="summary-total">
+      <div class="summary-total-label">Total Spent</div>
+      <div class="summary-total-amount" id="summary-total">₹0</div>
+      <div class="summary-total-count" id="summary-count"></div>
+    </div>
+    <div class="summary-breakdown" id="summary-breakdown"></div>
+  </div>
+</main>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Add Expense</div>
+
+    <div class="form-errors" id="form-errors">
+      <ul id="error-list"></ul>
+    </div>
+
+    <input type="hidden" id="edit-id" />
+
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="f-exp-title" maxlength="100" placeholder="e.g. Coffee at Starbucks" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Amount (₹) *</label>
+        <input type="number" id="f-exp-amount" min="0.01" step="0.01" placeholder="0.00" />
+      </div>
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="f-exp-category">
+          <option value="">Select…</option>
+          <option>Food</option>
+          <option>Transport</option>
+          <option>Shopping</option>
+          <option>Bills</option>
+          <option>Entertainment</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Date *</label>
+      <input type="date" id="f-exp-date" />
+    </div>
+
+    <div class="form-group">
+      <label>Note (optional)</label>
+      <textarea id="f-exp-note" maxlength="500" placeholder="Any additional detail…"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-submit" onclick="submitExpense()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE DIALOG -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <p id="confirm-msg">Delete this expense?</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-danger" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ───────────────────────────────────────────────────────────────────
+  const CURRENCY = '₹';
+  const CAT_COLORS = {
+    Food: '#e8a838', Transport: '#3a7bd5', Shopping: '#9b59b6',
+    Bills: '#c8421a', Entertainment: '#1a7a3c', Other: '#6b6560'
+  };
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  let summaryMonth = { year: new Date().getFullYear(), month: new Date().getMonth() + 1 };
+  let debounceTimer;
+  let confirmCallback = null;
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function fmt(amount) {
+    return CURRENCY + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtDate(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d} ${MONTHS[+m - 1]} ${y}`;
+  }
+
+  function today() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function debounceLoad() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(loadExpenses, 300);
+  }
+
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => t.className = 'toast', 2500);
+  }
+
+  // ── Confirm Dialog ──────────────────────────────────────────────────────────
+  function openConfirm(msg, cb) {
+    document.getElementById('confirm-msg').textContent = msg;
+    confirmCallback = cb;
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-ok').onclick = () => { closeConfirm(); cb(); };
+  }
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+  }
+
+  // ── Modal ───────────────────────────────────────────────────────────────────
+  function openModal(expense = null) {
+    document.getElementById('modal-overlay').classList.add('open');
+    document.getElementById('form-errors').classList.remove('show');
+
+    if (expense) {
+      document.getElementById('modal-title').textContent = 'Edit Expense';
+      document.getElementById('edit-id').value = expense.id;
+      document.getElementById('f-exp-title').value = expense.title;
+      document.getElementById('f-exp-amount').value = expense.amount;
+      document.getElementById('f-exp-category').value = expense.category;
+      document.getElementById('f-exp-date').value = expense.date;
+      document.getElementById('f-exp-note').value = expense.note || '';
+    } else {
+      document.getElementById('modal-title').textContent = 'Add Expense';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('f-exp-title').value = '';
+      document.getElementById('f-exp-amount').value = '';
+      document.getElementById('f-exp-category').value = '';
+      document.getElementById('f-exp-date').value = today();
+      document.getElementById('f-exp-note').value = '';
+    }
+
+    setTimeout(() => document.getElementById('f-exp-title').focus(), 100);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  // ── API calls ───────────────────────────────────────────────────────────────
+  async function loadExpenses() {
+    const params = new URLSearchParams();
+    const title = document.getElementById('f-title').value.trim();
+    const category = document.getElementById('f-category').value;
+    const from = document.getElementById('f-from').value;
+    const to = document.getElementById('f-to').value;
+
+    if (title) params.set('title', title);
+    if (category) params.set('category', category);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+
+    const res = await fetch('/api/expenses?' + params);
+    const expenses = await res.json();
+    renderExpenses(expenses);
+  }
+
+  async function loadSummary() {
+    const { year, month } = summaryMonth;
+    const res = await fetch(`/api/expenses/summary?year=${year}&month=${month}`);
+    const data = await res.json();
+    renderSummary(data);
+  }
+
+  async function submitExpense() {
+    const id = document.getElementById('edit-id').value;
+    const body = {
+      title: document.getElementById('f-exp-title').value,
+      amount: document.getElementById('f-exp-amount').value,
+      category: document.getElementById('f-exp-category').value,
+      date: document.getElementById('f-exp-date').value,
+      note: document.getElementById('f-exp-note').value,
+    };
+
+    const url = id ? `/api/expenses/${id}` : '/api/expenses';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      showErrors(data.errors);
+      return;
+    }
+
+    closeModal();
+    showToast(id ? 'Expense updated.' : 'Expense added.');
+    loadExpenses();
+    loadSummary();
+  }
+
+  async function deleteExpense(id, title) {
+    openConfirm(`Delete "${title}"? This cannot be undone.`, async () => {
+      const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Expense deleted.');
+        loadExpenses();
+        loadSummary();
+      } else {
+        showToast('Failed to delete.', true);
+      }
+    });
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+  function renderExpenses(expenses) {
+    const list = document.getElementById('expense-list');
+    const countEl = document.getElementById('result-count');
+
+    countEl.textContent = expenses.length === 0
+      ? '' : `${expenses.length} expense${expenses.length === 1 ? '' : 's'}`;
+
+    if (expenses.length === 0) {
+      const hasFilters = ['f-title','f-category','f-from','f-to']
+        .some(id => document.getElementById(id).value);
+      list.innerHTML = `<div class="empty-state">${
+        hasFilters ? 'No expenses match your filters.' : 'No expenses yet. Add your first one →'
+      }</div>`;
+      return;
+    }
+
+    list.innerHTML = expenses.map(e => `
+      <div class="expense-row">
+        <div class="exp-title-group">
+          <span class="exp-title" title="${esc(e.title)}">${esc(e.title)}</span>
+          ${e.note ? `<span class="exp-note" title="${esc(e.note)}">${esc(e.note)}</span>` : ''}
+        </div>
+        <div class="exp-amount">${fmt(e.amount)}</div>
+        <div class="exp-cat cat-${e.category}">
+          <span class="cat-dot"></span>${e.category}
+        </div>
+        <div class="exp-date">${fmtDate(e.date)}</div>
+        <div class="exp-actions">
+          <button class="btn-icon edit" onclick='editExpense(${JSON.stringify(e)})' title="Edit">edit</button>
+          <button class="btn-icon del" onclick="deleteExpense('${e.id}', '${esc(e.title)}')" title="Delete">del</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderSummary(data) {
+    const { year, month, total, breakdown, count } = data;
+    document.getElementById('month-label').textContent = `${MONTHS[month - 1]} ${year}`;
+    document.getElementById('summary-total').textContent = fmt(total);
+    document.getElementById('summary-count').textContent =
+      count === 0 ? 'No expenses this month' : `${count} expense${count === 1 ? '' : 's'}`;
+
+    const maxVal = Math.max(...Object.values(breakdown), 1);
+    const rows = Object.entries(breakdown)
+      .filter(([, v]) => v > 0)
+      .sort((a, b) => b[1] - a[1]);
+
+    if (rows.length === 0) {
+      document.getElementById('summary-breakdown').innerHTML =
+        `<div style="font-size:0.78rem;color:var(--muted);font-style:italic;padding:1rem 0">Nothing spent this month.</div>`;
+      return;
+    }
+
+    document.getElementById('summary-breakdown').innerHTML = rows.map(([cat, amt]) => `
+      <div class="summary-row">
+        <div style="width:100%">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem">
+            <span class="summary-cat-label">
+              <span style="width:8px;height:8px;border-radius:50%;background:${CAT_COLORS[cat]};display:inline-block;flex-shrink:0"></span>
+              ${cat}
+            </span>
+            <span class="summary-cat-amount">${fmt(amt)}</span>
+          </div>
+          <div class="summary-bar-wrap">
+            <div class="summary-bar" style="width:${(amt/maxVal*100).toFixed(1)}%;background:${CAT_COLORS[cat]}"></div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function showErrors(errors) {
+    const box = document.getElementById('form-errors');
+    const ul = document.getElementById('error-list');
+    ul.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+    box.classList.add('show');
+  }
+
+  // ── Utils ───────────────────────────────────────────────────────────────────
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function editExpense(expense) {
+    openModal(expense);
+  }
+
+  function clearFilters() {
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-category').value = '';
+    document.getElementById('f-from').value = '';
+    document.getElementById('f-to').value = '';
+    loadExpenses();
+  }
+
+  function changeMonth(delta) {
+    summaryMonth.month += delta;
+    if (summaryMonth.month > 12) { summaryMonth.month = 1; summaryMonth.year++; }
+    if (summaryMonth.month < 1) { summaryMonth.month = 12; summaryMonth.year--; }
+    loadSummary();
+  }
+
+  // Keyboard: Escape closes modal
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeConfirm();
+    }
+  });
+
+  // ── Init ────────────────────────────────────────────────────────────────────
+  loadExpenses();
+  loadSummary();
+</script>
+</body>
+</html>
